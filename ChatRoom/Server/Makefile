@@ -1,8 +1,8 @@
 Server.out: Server.o
-	g++ Server.cpp -o Server.out
+	g++ Server.cpp -o Server.out -std=c++11
 
-Server.o:
-	g++ -c Server.cpp -o Server.o
+Server.o: Server.cpp
+	g++ -c Server.cpp -o Server.o -std=c++11
 
 .PHONY: clean
 clean:

@@ -10,8 +10,19 @@
 #include <pthread.h>
 using namespace std;
 
+#define DEBUG0
+
+const char LOGIN_SUCCESS[] = "LOGIN_SUCCESS";
+const char CHECK_LOGIN[] = "CHECK_LOGIN";
+
 char username[100];
 int socketFd;
+
+void debug(string message) {
+#ifdef DEBUG
+    cout << message << endl;
+#endif
+}
 
 void log(const char *message) {
     cout << message << endl;
@@ -40,15 +51,17 @@ void login(int socketFd) {
     cout << "Enter your username and password:" << endl;
     char password[100];
     cin >> username >> password;
-    string message = string(username) + ' ' + password;
+    string message = string(CHECK_LOGIN) + '#' + string(username) + ' ' + password;
     write(socketFd, message.c_str(), message.size());
     char buf[1024];
-    read(socketFd, buf, sizeof(buf) - 1);
-    if (strcmp(buf, "OK") != 0) {
-        cout << "Login fail" << endl;
+    int iRet = read(socketFd, buf, sizeof(buf) - 1);
+    buf[iRet] = 0;
+    debug(buf);
+    if (strcmp(buf, LOGIN_SUCCESS) != 0) {
+        cout << "[System]: Login fail" << endl;
         exit(0);
     } else {
-        cout << "Login successful" << endl;
+        cout << "[System]: Login successful" << endl;
     }
 }
 
