@@ -16,7 +16,7 @@ using namespace std;
 
 const char LOGIN_SUCCESS[] = "LOGIN_SUCCESS";
 const char CHECK_LOGIN[] = "CHECK_LOGIN";
-const char EXIT_CMD[] = "EXIT_CMD";
+const char EXIT_CMD[] = "EXIT";
 const char TO_ALL[] = "TO_ALL"; 
 const int MAXCLIENTS = 1024;
 
@@ -25,7 +25,7 @@ map<string, int> users;
 int serverSocketFd;
 int epollFd;
 
-void debug(const char *message) {
+void debug(string message) {
 #ifdef DEBUG
     cout << message << endl;
 #endif
@@ -84,7 +84,9 @@ void sendToAll(string username, string message) {
 }
 
 void sendToOne(string username, string to_user, string message) {
-
+    if (users.find(to_user) != users.end()) {
+        write(users[to_user], message.c_str(), message.size());
+    }
 }
 
 void work_data(char *str, int fd) {
@@ -92,17 +94,26 @@ void work_data(char *str, int fd) {
     *p = 0;
     if (strcmp(str, CHECK_LOGIN) == 0) {
         str = p + 1;
+        p = strchr(str, '#');
+        *p = 0;
+        string username = str;
+        string password = p + 1;
         
         //TODO check login
-
+        
         users[str] = fd; 
         write(fd, LOGIN_SUCCESS, sizeof(LOGIN_SUCCESS));
+        sendToAll(username, "[System]: " + username + " on line.");
     } else {
         string username = str;
         str = p + 1;
         p = strchr(str, '#');
+        if (p != NULL)
+            *p = 0;
         if (strcmp(str, EXIT_CMD) == 0) {
-            sendToAll(username, '(' + username + ')' + "off line");
+            close(users[username]);
+            users.erase(username);
+            sendToAll(username, "[System]: " + username + " off line.");
         } else if (strcmp(str, TO_ALL) == 0) {
             str = p + 1;
             sendToAll(username, "[" + username + "]: " + str);  

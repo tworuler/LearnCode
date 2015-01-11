@@ -14,8 +14,10 @@ using namespace std;
 
 const char LOGIN_SUCCESS[] = "LOGIN_SUCCESS";
 const char CHECK_LOGIN[] = "CHECK_LOGIN";
+const char EXIT_CMD[] = "EXIT";
+const char TO_ALL[] = "TO_ALL"; 
 
-char username[100];
+string username;
 int socketFd;
 
 void debug(string message) {
@@ -40,7 +42,7 @@ int connect(const char *ip, int port) {
     stSvrAddr.sin_port = htons(port);
     stSvrAddr.sin_addr.s_addr = inet_addr(ip);
     if (connect(socketFd, (struct sockaddr*)&stSvrAddr, sizeof(stSvrAddr)) == -1) {
-        log("Connect to server error");
+        log("Connect to server error.");
         exit(-1);
     }
 
@@ -51,7 +53,7 @@ void login(int socketFd) {
     cout << "Enter your username and password:" << endl;
     char password[100];
     cin >> username >> password;
-    string message = string(CHECK_LOGIN) + '#' + string(username) + ' ' + password;
+    string message = string(CHECK_LOGIN) + '#' + string(username) + '#' + password;
     write(socketFd, message.c_str(), message.size());
     char buf[1024];
     int iRet = read(socketFd, buf, sizeof(buf) - 1);
@@ -66,11 +68,36 @@ void login(int socketFd) {
 }
 
 void* recieve(void *arg) {
-
+    char buf[1024];
+    while (1) {
+        int iRet = read(socketFd, buf, sizeof(buf) - 1);
+        buf[iRet] = 0;
+        cout << buf << endl;
+    }
 }
 
 void* send(void *arg) {
-
+    while (1) {
+        string message;
+        getline(cin, message);
+        if (message.length()) {
+            if (message == EXIT_CMD) {
+                message = username + string("#") + message;
+                close(socketFd);
+                exit(0);
+            } else if (message[0] == '@') {
+                message[0] = '#';
+                if (message.find(' ') != string::npos)
+                    message[message.find(' ')] = '#';
+                else
+                    message = message + '#';
+                message = username + message;
+            } else {
+                message = username + string("#") + TO_ALL + "#" + message;
+            }
+            write(socketFd, message.c_str(), message.size());
+        }
+    }
 }
 
 int main(int argc, char** argv) {
