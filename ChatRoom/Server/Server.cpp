@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <map>
 #include <fcntl.h>
+#include <mysql/mysql.h>
 using namespace std;
 
 #define DEBUG
@@ -24,6 +25,10 @@ struct epoll_event events[MAXCLIENTS];
 map<string, int> users;
 int serverSocketFd;
 int epollFd;
+
+MYSQL *mysql;
+MYSQL_RES *res;
+MYSQL_ROW *row;
 
 void debug(string message) {
 #ifdef DEBUG
@@ -186,6 +191,16 @@ int main(int argc, char *argv[]) {
     epollFd = epoll_create1(0);
     if (epollFd == -1) {
         log("Epoll create error");
+        return -1;
+    }
+    
+    mysql = mysql_init(NULL);
+    if (mysql == NULL) {
+        log("mysql fail");
+        return -1;
+    }
+    if (mysql_real_connect(mysql, "localhost", "root", NULL, NULL, 0, NULL, 0) == NULL) {
+        log("mysql real connect fail");
         return -1;
     }
 
