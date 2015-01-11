@@ -1,8 +1,8 @@
 Client.out: Client.o
-	g++ Client.o -o Client.out
+	g++ Client.o -o Client.out -lpthread
 
 Client.o:
-	g++ -c Client.cpp -o Client.o
+	g++ -c Client.cpp -o Client.o -lpthread -std=c++11
 
 .PHONY: clean
 clean:
