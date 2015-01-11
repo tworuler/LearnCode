@@ -105,6 +105,8 @@ void work_data(char *str, int fd) {
         string password = p + 1;
         
         //TODO check login
+        string query = "select * from chatroom where username=\'" + username + "\'"
+                     + "and password=\'" + password + "\'";
         
         users[str] = fd; 
         write(fd, LOGIN_SUCCESS, sizeof(LOGIN_SUCCESS));
@@ -199,7 +201,10 @@ int main(int argc, char *argv[]) {
         log("mysql fail");
         return -1;
     }
-    if (mysql_real_connect(mysql, "localhost", "root", NULL, NULL, 0, NULL, 0) == NULL) {
+    char password[10];
+    FILE *fp = fopen("/root/temp/password", "r");
+    fscanf(fp, "%s", password);
+    if (mysql_real_connect(mysql, "localhost", "root", password, "chatroom", 0, NULL, 0) == NULL) {
         log("mysql real connect fail");
         return -1;
     }
