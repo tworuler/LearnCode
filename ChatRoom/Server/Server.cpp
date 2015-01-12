@@ -28,7 +28,7 @@ int epollFd;
 
 MYSQL *mysql;
 MYSQL_RES *res;
-MYSQL_ROW *row;
+MYSQL_ROW row;
 
 void debug(string message) {
 #ifdef DEBUG
@@ -105,12 +105,20 @@ void work_data(char *str, int fd) {
         string password = p + 1;
         
         //TODO check login
-        string query = "select * from chatroom where username=\'" + username + "\'"
-                     + "and password=\'" + password + "\'";
-        
-        users[str] = fd; 
-        write(fd, LOGIN_SUCCESS, sizeof(LOGIN_SUCCESS));
-        sendToAll(username, "[System]: " + username + " on line.");
+        string query = "select * from user where username='" + username + "'";
+        debug(query);
+        if (mysql_query(mysql, query.c_str()) != 0) {        
+            res = mysql_use_result(mysql);
+            //row = mysql_fetch_row(res);
+            if (true || res) {
+                users[str] = fd; 
+                write(fd, LOGIN_SUCCESS, sizeof(LOGIN_SUCCESS));
+                sendToAll(username, "[System]: " + username + " on line.");
+            }
+        } else {
+            close(fd);
+            write(fd, "LOGIN_FAIL", sizeof("LOGIN_FAIL"));
+        }
     } else {
         string username = str;
         str = p + 1;
@@ -204,7 +212,8 @@ int main(int argc, char *argv[]) {
     char password[10];
     FILE *fp = fopen("/root/temp/password", "r");
     fscanf(fp, "%s", password);
-    if (mysql_real_connect(mysql, "localhost", "root", password, "chatroom", 0, NULL, 0) == NULL) {
+    if (mysql_real_connect(mysql, "localhost", "root", password, NULL, 0, NULL, 0) == NULL) {
+        mysql_query(mysql, "use chatroom");
         log("mysql real connect fail");
         return -1;
     }
